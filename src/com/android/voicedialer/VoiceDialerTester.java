@@ -31,6 +31,7 @@ import java.util.Vector;
  */
 public class VoiceDialerTester {
     private static final String TAG = "VoiceDialerTester";
+    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
 
     private final WavFile[] mWavFiles;
     private final File[] mWavDirs;
@@ -53,9 +54,7 @@ public class VoiceDialerTester {
      * Sweep directory of directories, listing all WAV files.
      */
     public VoiceDialerTester(File dir) {
-        if (false) {
-            Log.d(TAG, "VoiceDialerTester " + dir);
-        }
+        if (DEBUG) Log.d(TAG, "VoiceDialerTester " + dir);
 
         // keep a list of directories visited
         Vector<File> wavDirs = new Vector<File>();
@@ -158,7 +157,7 @@ public class VoiceDialerTester {
      */
     public void report() {
         // report for each file
-        Log.d(TAG, "List of all utterances tested");
+        if (DEBUG) Log.d(TAG, "List of all utterances tested");
         for (WavFile wf : mWavFiles) {
             Log.d(TAG, wf.mRank + "/" + wf.mTotal + "  " + wf.mFile +
                     (wf.mMessage != null ? "  " + wf.mMessage : ""));
@@ -171,8 +170,8 @@ public class VoiceDialerTester {
         reportSummaryForEachDir();
 
         // summary report for all files
-        Log.d(TAG, "Summary of all utterances");
-        Log.d(TAG, REPORT_HDR);
+        if (DEBUG) Log.d(TAG, "Summary of all utterances");
+        if (DEBUG) Log.d(TAG, REPORT_HDR);
         reportSummary("Total", null);
     }
 
@@ -184,8 +183,8 @@ public class VoiceDialerTester {
         String[] names = set.toArray(new String[set.size()]);
         Arrays.sort(names);
 
-        Log.d(TAG, "Summary of utternaces by filename");
-        Log.d(TAG, REPORT_HDR);
+        if (DEBUG) Log.d(TAG, "Summary of utternaces by filename");
+        if (DEBUG) Log.d(TAG, REPORT_HDR);
         for (final String fn : names) {
             reportSummary(fn,
                     new FileFilter() {
@@ -204,8 +203,8 @@ public class VoiceDialerTester {
         String[] names = set.toArray(new String[set.size()]);
         Arrays.sort(names);
 
-        Log.d(TAG, "Summary of utterances by directory");
-        Log.d(TAG, REPORT_HDR);
+        if (DEBUG) Log.d(TAG, "Summary of utterances by directory");
+        if (DEBUG) Log.d(TAG, REPORT_HDR);
         for (File dir : mWavDirs) {
             final String dn = dir.getPath();
             final String dn2 = dn + "/";
@@ -219,7 +218,7 @@ public class VoiceDialerTester {
     }
 
     private void reportSummary(String label, FileFilter filter) {
-        if (!false) return;
+        if (!DEBUG) return;
 
         // log cumulative stats
         int total = 0;

@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
+
+    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
+
     /**
      * Constructor.
      */
@@ -32,7 +35,7 @@ public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
 
     protected void setupGrammar() throws IOException, InterruptedException {
         if (mSrecGrammar == null) {
-            if (false) Log.d(TAG, "start new Grammar");
+            if (DEBUG) Log.d(TAG, "start new Grammar");
             mSrecGrammar = mSrec.new Grammar(SREC_DIR + "/grammars/phone_type_choice.g2g");
             mSrecGrammar.setupRecognizer();
         }
@@ -46,7 +49,7 @@ public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
      * @param recognizerClient the client that will be sent the results
      */
     protected void onRecognitionSuccess(RecognizerClient recognizerClient) throws InterruptedException {
-        if (false) Log.d(TAG, "onRecognitionSuccess " + mSrec.getResultCount());
+        if (DEBUG) Log.d(TAG, "onRecognitionSuccess " + mSrec.getResultCount());
 
         if (mLogger != null) mLogger.logNbestHeader();
 
@@ -60,7 +63,7 @@ public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
             String literal = mSrec.getResult(result, Recognizer.KEY_LITERAL);
             String semantic = mSrec.getResult(result, Recognizer.KEY_MEANING);
             String msg = "conf=" + conf + " lit=" + literal + " sem=" + semantic;
-            if (false) Log.d(TAG, msg);
+            if (DEBUG) Log.d(TAG, msg);
         }
 
         // we only pay attention to the first result.
@@ -70,7 +73,7 @@ public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
             String literal = mSrec.getResult(0, Recognizer.KEY_LITERAL);
             String semantic = mSrec.getResult(0, Recognizer.KEY_MEANING);
             String msg = "conf=" + conf + " lit=" + literal + " sem=" + semantic;
-            if (false) Log.d(TAG, msg);
+            if (DEBUG) Log.d(TAG, msg);
             if (mLogger != null) mLogger.logLine(msg);
 
             if (("H".equalsIgnoreCase(semantic)) ||
@@ -79,7 +82,7 @@ public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
                 ("O".equalsIgnoreCase(semantic)) ||
                 ("R".equalsIgnoreCase(semantic)) ||
                 ("X".equalsIgnoreCase(semantic))) {
-                if (false) Log.d(TAG, " got valid response");
+                if (DEBUG) Log.d(TAG, " got valid response");
                 Intent intent = new Intent(RecognizerEngine.ACTION_RECOGNIZER_RESULT, null);
                 intent.putExtra(RecognizerEngine.SENTENCE_EXTRA, literal);
                 intent.putExtra(RecognizerEngine.SEMANTIC_EXTRA, semantic);
@@ -96,11 +99,11 @@ public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
         if (Thread.interrupted()) throw new InterruptedException();
 
         if (intents.size() == 0) {
-            if (false) Log.d(TAG, " no intents");
+            if (DEBUG) Log.d(TAG, " no intents");
             recognizerClient.onRecognitionFailure("No Intents generated");
         }
         else {
-            if (false) Log.d(TAG, " success");
+            if (DEBUG) Log.d(TAG, " success");
             recognizerClient.onRecognitionSuccess(
                     intents.toArray(new Intent[intents.size()]));
         }

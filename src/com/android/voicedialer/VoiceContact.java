@@ -36,6 +36,7 @@ import java.util.List;
  */
 public class VoiceContact {
     private static final String TAG = "VoiceContact";
+    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
 
     /**
      * Corresponding row doesn't exist.
@@ -109,7 +110,7 @@ public class VoiceContact {
      * the contact list content provider.
      */
     public static List<VoiceContact> getVoiceContacts(Activity activity) {
-        if (false) Log.d(TAG, "VoiceContact.getVoiceContacts");
+        if (DEBUG) Log.d(TAG, "VoiceContact.getVoiceContacts");
 
         List<VoiceContact> contacts = new ArrayList<VoiceContact>();
 
@@ -158,8 +159,7 @@ public class VoiceContact {
             String nameAtCursor = cursor.getString(nameColumn);
             long personIdAtCursor = cursor.getLong(personIdColumn);
 
-            /*
-            if (false) {
+            if (DEBUG) {
                 Log.d(TAG, "phoneId=" + phoneIdAtCursor
                         + " type=" + typeAtCursor
                         + " isPrimary=" + isPrimaryAtCursor
@@ -168,7 +168,6 @@ public class VoiceContact {
                         + " personId=" + personIdAtCursor
                         );
             }
-            */
 
             // encountered a new name, so generate current VoiceContact
             if (name != null && !name.equals(nameAtCursor)) {
@@ -254,7 +253,7 @@ public class VoiceContact {
         // clean up cursor
         cursor.close();
 
-        if (false) Log.d(TAG, "VoiceContact.getVoiceContacts " + contacts.size());
+        if (DEBUG) Log.d(TAG, "VoiceContact.getVoiceContacts " + contacts.size());
 
         return contacts;
     }
@@ -265,7 +264,7 @@ public class VoiceContact {
      * @return a List of {@link VoiceContact} in a File.
      */
     public static List<VoiceContact> getVoiceContactsFromFile(File contactsFile) {
-        if (false) Log.d(TAG, "getVoiceContactsFromFile " + contactsFile);
+        if (DEBUG) Log.d(TAG, "getVoiceContactsFromFile " + contactsFile);
 
         List<VoiceContact> contacts = new ArrayList<VoiceContact>();
 
@@ -280,17 +279,17 @@ public class VoiceContact {
             }
         }
         catch (IOException e) {
-            if (false) Log.d(TAG, "getVoiceContactsFromFile failed " + e);
+            if (DEBUG) Log.d(TAG, "getVoiceContactsFromFile failed " + e);
         }
         finally {
             try {
                 br.close();
             } catch (IOException e) {
-                if (false) Log.d(TAG, "getVoiceContactsFromFile failed during close " + e);
+                if (DEBUG) Log.d(TAG, "getVoiceContactsFromFile failed during close " + e);
             }
         }
 
-        if (false) Log.d(TAG, "getVoiceContactsFromFile " + contacts.size());
+        if (DEBUG) Log.d(TAG, "getVoiceContactsFromFile " + contacts.size());
 
         return contacts;
     }
@@ -314,7 +313,7 @@ public class VoiceContact {
         }
         cursor.close();
 
-        if (false) Log.d(TAG, "redialNumber " + number);
+        if (DEBUG) Log.d(TAG, "redialNumber " + number);
 
         return number;
     }

@@ -26,10 +26,11 @@ import android.widget.Toast;
 
 public class VoiceDialerReceiver extends BroadcastReceiver {
     private static final String TAG = "VoiceDialerReceiver";
-    
+    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (false) Log.d(TAG, "onReceive " + intent);
+        if (DEBUG) Log.d(TAG, "onReceive " + intent);
 
         // fetch up useful stuff
         String action = intent.getAction();
