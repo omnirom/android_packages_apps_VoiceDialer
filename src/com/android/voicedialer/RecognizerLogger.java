@@ -51,15 +51,16 @@ import java.util.List;
 public class RecognizerLogger {
 
     private static final String TAG = "RecognizerLogger";
-    
+    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
+
     private static final String LOGDIR = "logdir";
     private static final String ENABLED = "enabled";
-    
+
     private static final int MAX_FILES = 20;
-    
+
     private final String mDatedPath;
     private final BufferedWriter mWriter;
-    
+
     /**
      * Determine if logging is enabled.  If the
      * @param context needed to reference the logging directory.
@@ -70,7 +71,7 @@ public class RecognizerLogger {
         File enabled = new File(dir, ENABLED);
         return enabled.exists();
     }
-    
+
     /**
      * Enable logging.
      * @param context needed to reference the logging directory.
@@ -85,7 +86,7 @@ public class RecognizerLogger {
             Log.e(TAG, "enableLogging " + e);
         }
     }
-    
+
     /**
      * Disable logging.
      * @param context needed to reference the logging directory.
@@ -106,24 +107,24 @@ public class RecognizerLogger {
      * @param dataDir directory to contain the log files.
      */
     public RecognizerLogger(Context context) throws IOException {
-        if (false) Log.d(TAG, "RecognizerLogger");
-        
+        if (DEBUG) Log.d(TAG, "RecognizerLogger");
+
         // generate new root filename
         File dir = context.getDir(LOGDIR, 0);
         mDatedPath = dir.toString() + File.separator + "log_" +
                 DateFormat.format("yyyy_MM_dd_kk_mm_ss",
                         System.currentTimeMillis());
-        
+
         // delete oldest files
         deleteOldest(".wav");
         deleteOldest(".log");
-        
+
         // generate new text output log file
         mWriter = new BufferedWriter(new FileWriter(mDatedPath + ".log"), 8192);
         mWriter.write(Build.FINGERPRINT);
         mWriter.newLine();
     }
-    
+
     /**
      * Write a line into the text log file.
      */
@@ -136,14 +137,14 @@ public class RecognizerLogger {
             Log.e(TAG, "logLine exception: " + e);
         }
     }
-    
+
     /**
      * Write a header for the NBest lines into the text log file.
      */
     public void logNbestHeader() {
         logLine("Nbest *****************");
     }
-    
+
     /**
      * Write the list of contacts into the text log file.
      * @param contacts
@@ -158,7 +159,7 @@ public class RecognizerLogger {
             Log.e(TAG, "logContacts exception: " + e);
         }
     }
-    
+
     /**
      * Write a list of Intents into the text log file.
      * @param intents
@@ -177,7 +178,7 @@ public class RecognizerLogger {
             Log.e(TAG, "logIntents exception: " + e);
         }
     }
-    
+
     /**
      * Close the text log file.
      * @throws IOException
@@ -201,7 +202,7 @@ public class RecognizerLogger {
         Arrays.sort(files);
 
         for (int i = 0; i < files.length - MAX_FILES; i++) {
-            files[i].delete();            
+            files[i].delete();
         }
     }
 
@@ -213,7 +214,7 @@ public class RecognizerLogger {
      */
     public InputStream logInputStream(final InputStream inputStream, final int sampleRate) {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream(sampleRate * 2 * 20);
-        
+
         return new InputStream() {
 
             public int available() throws IOException {

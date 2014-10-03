@@ -125,6 +125,7 @@ import java.util.List;
 public class VoiceDialerActivity extends Activity {
 
     private static final String TAG = "VoiceDialerActivity";
+    public static final boolean DEBUG = false;
 
     private static final String MICROPHONE_EXTRA = "microphone";
     private static final String CONTACTS_EXTRA = "contacts";
@@ -234,7 +235,8 @@ public class VoiceDialerActivity extends Activity {
         mChoiceClient = new ChoiceRecognizerClient();
 
         mAdapter = BluetoothAdapter.getDefaultAdapter();
-        if (BluetoothHeadset.isBluetoothVoiceDialingEnabled(this) && mAdapter != null) {
+        if (BluetoothHeadset.isBluetoothVoiceDialingEnabled(this) && mAdapter != null
+                   && mAdapter.isEnabled()) {
            if (!mAdapter.getProfileProxy(this, mBluetoothHeadsetServiceListener,
                                          BluetoothProfile.HEADSET)) {
                Log.e(TAG, "Getting Headset Proxy failed");
@@ -242,7 +244,7 @@ public class VoiceDialerActivity extends Activity {
 
         } else {
             mUsingBluetooth = false;
-            if (false) Log.d(TAG, "bluetooth unavailable");
+            if (DEBUG) Log.d(TAG, "bluetooth unavailable");
             mSampleRate = REGULAR_SAMPLE_RATE;
             mCommandEngine.setMinimizeResults(false);
             mCommandEngine.setAllowOpenEntries(true);
@@ -287,7 +289,7 @@ public class VoiceDialerActivity extends Activity {
             if (mFallback) {
                 Log.e(TAG, "utterance completion not delivered, using fallback");
             }
-            Log.d(TAG, "onTtsCompletionRunnable");
+            if (DEBUG) Log.d(TAG, "onTtsCompletionRunnable");
             if (mState == SPEAKING_GREETING || mState == SPEAKING_TRY_AGAIN) {
                 listenForCommand();
             } else if (mState == SPEAKING_CHOICES) {
@@ -323,7 +325,7 @@ public class VoiceDialerActivity extends Activity {
     class TtsInitListener implements TextToSpeech.OnInitListener {
         public void onInit(int status) {
             // status can be either TextToSpeech.SUCCESS or TextToSpeech.ERROR.
-            if (false) Log.d(TAG, "onInit for tts");
+            if (DEBUG) Log.d(TAG, "onInit for tts");
             if (status != TextToSpeech.SUCCESS) {
                 // Initialization failed.
                 Log.e(TAG, "Could not initialize TextToSpeech.");
@@ -368,7 +370,7 @@ public class VoiceDialerActivity extends Activity {
     class OnUtteranceCompletedListener
             implements TextToSpeech.OnUtteranceCompletedListener {
         public void onUtteranceCompleted(String utteranceId) {
-            if (false) Log.d(TAG, "onUtteranceCompleted " + utteranceId);
+            if (DEBUG) Log.d(TAG, "onUtteranceCompleted " + utteranceId);
             // since the utterance has completed, we no longer need the fallback.
             mHandler.removeCallbacks(mFallbackRunnable);
             mFallbackRunnable = null;
@@ -378,7 +380,7 @@ public class VoiceDialerActivity extends Activity {
 
     private void updateBluetoothParameters(boolean connected) {
         if (connected) {
-            if (false) Log.d(TAG, "using bluetooth");
+            if (DEBUG) Log.d(TAG, "using bluetooth");
             mUsingBluetooth = true;
 
             mBluetoothHeadset.startVoiceRecognition(mBluetoothDevice);
@@ -401,7 +403,7 @@ public class VoiceDialerActivity extends Activity {
             // we need to wait for the TTS system and the SCO connection
             // before we can start listening.
         } else {
-            if (false) Log.d(TAG, "not using bluetooth");
+            if (DEBUG) Log.d(TAG, "not using bluetooth");
             mUsingBluetooth = false;
             mSampleRate = REGULAR_SAMPLE_RATE;
             mCommandEngine.setMinimizeResults(false);
@@ -415,7 +417,7 @@ public class VoiceDialerActivity extends Activity {
     private BluetoothProfile.ServiceListener mBluetoothHeadsetServiceListener =
             new BluetoothProfile.ServiceListener() {
         public void onServiceConnected(int profile, BluetoothProfile proxy) {
-            if (false) Log.d(TAG, "onServiceConnected");
+            if (DEBUG) Log.d(TAG, "onServiceConnected");
             mBluetoothHeadset = (BluetoothHeadset) proxy;
 
             List<BluetoothDevice> deviceList = mBluetoothHeadset.getConnectedDevices();
@@ -423,7 +425,7 @@ public class VoiceDialerActivity extends Activity {
             if (deviceList.size() > 0) {
                 mBluetoothDevice = deviceList.get(0);
                 int state = mBluetoothHeadset.getConnectionState(mBluetoothDevice);
-                if (false) Log.d(TAG, "headset status " + state);
+                if (DEBUG) Log.d(TAG, "headset status " + state);
 
                 // We are already connnected to a headset
                 if (state == BluetoothHeadset.STATE_CONNECTED) {
@@ -448,7 +450,7 @@ public class VoiceDialerActivity extends Activity {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
 
-                if (false) Log.d(TAG, "HEADSET STATE -> " + state);
+                if (DEBUG) Log.d(TAG, "HEADSET STATE -> " + state);
 
                 if (state == BluetoothProfile.STATE_CONNECTED) {
                     if (device == null) {
@@ -477,7 +479,7 @@ public class VoiceDialerActivity extends Activity {
                     if (!mWaitingForScoConnection && mState != EXITING) {
                         // apparently our connection to the headset has dropped.
                         // we won't be able to continue voicedialing.
-                        if (false) Log.d(TAG, "lost sco connection");
+                        if (DEBUG) Log.d(TAG, "lost sco connection");
 
                         mHandler.post(new ErrorRunnable(
                                 R.string.headset_connection_lost));
@@ -586,14 +588,14 @@ public class VoiceDialerActivity extends Activity {
          * Called by the {@link RecognizerEngine} when the microphone is started.
          */
         public void onMicrophoneStart(InputStream mic) {
-            if (false) Log.d(TAG, "onMicrophoneStart");
+            if (DEBUG) Log.d(TAG, "onMicrophoneStart");
 
            if (!mUsingBluetooth) {
                playSound(ToneGenerator.TONE_PROP_BEEP);
 
                 int ringVolume = mAudioManager.getStreamVolume(
                         AudioManager.STREAM_RING);
-                Log.d(TAG, "ringVolume " + ringVolume);
+                if (DEBUG) Log.d(TAG, "ringVolume " + ringVolume);
 
                 if (ringVolume >= MIN_VOLUME_TO_SKIP) {
                     // now we're playing a sound, and corrupting the input sample.
@@ -605,7 +607,7 @@ public class VoiceDialerActivity extends Activity {
                         Log.e(TAG, "IOException " + e);
                     }
                 } else {
-                    if (false) Log.d(TAG, "no tone");
+                    if (DEBUG) Log.d(TAG, "no tone");
                 }
             }
 
@@ -648,7 +650,7 @@ public class VoiceDialerActivity extends Activity {
             long prevE = 0; // previous pseudo energy
             long peak = 0;
             int threshold =  THRESHOLD*sampleCount;  // absolute energy threshold
-            Log.d(TAG, "blockSize " + blockSize);
+            if (DEBUG) Log.d(TAG, "blockSize " + blockSize);
 
             while (count < maxBytes) {
                 int cnt = 0;
@@ -671,25 +673,25 @@ public class VoiceDialerActivity extends Activity {
                     cnt -= 2;
                 }
                 long energy = (sumxx*sampleCount - sumx*sumx)/(sampleCount*sampleCount);
-                Log.d(TAG, "sumx " + sumx + " sumxx " + sumxx + " ee " + energy);
+                if (DEBUG) Log.d(TAG, "sumx " + sumx + " sumxx " + sumxx + " ee " + energy);
 
                 switch (state) {
                     case START:
                         if (energy > threshold && energy > (prevE * 2) && prevE != 0) {
                             // rising edge if energy doubled and > abs threshold
                             state = RISING;
-                            if (false) Log.d(TAG, "start RISING: " + count +" time: "+ (((1000*count)/2)/mSampleRate));
+                            if (DEBUG) Log.d(TAG, "start RISING: " + count +" time: "+ (((1000*count)/2)/mSampleRate));
                         }
                         break;
                     case RISING:
                         if (energy < threshold || energy < (prevE / 2)){
                             // energy fell back below half of previous, back to start
-                            if (false) Log.d(TAG, "back to START: " + count +" time: "+ (((1000*count)/2)/mSampleRate));
+                            if (DEBUG) Log.d(TAG, "back to START: " + count +" time: "+ (((1000*count)/2)/mSampleRate));
                             peak = 0;
                             state = START;
                         } else if (energy > (prevE / 2) && energy < (prevE * 2)) {
                             // Start of constant energy
-                            if (false) Log.d(TAG, "start TOP: " + count +" time: "+ (((1000*count)/2)/mSampleRate));
+                            if (DEBUG) Log.d(TAG, "start TOP: " + count +" time: "+ (((1000*count)/2)/mSampleRate));
                             if (peak < energy) {
                                 peak = energy;
                             }
@@ -699,7 +701,7 @@ public class VoiceDialerActivity extends Activity {
                     case TOP:
                         if (energy < threshold || energy < (peak / 2)) {
                             // e went to less than half of the peak
-                            if (false) Log.d(TAG, "end TOP: " + count +" time: "+ (((1000*count)/2)/mSampleRate));
+                            if (DEBUG) Log.d(TAG, "end TOP: " + count +" time: "+ (((1000*count)/2)/mSampleRate));
                             return;
                         }
                         break;
@@ -707,14 +709,14 @@ public class VoiceDialerActivity extends Activity {
                 prevE = energy;
                 count += blockSize;
             }
-            if (false) Log.d(TAG, "no beep detected, timed out");
+            if (DEBUG) Log.d(TAG, "no beep detected, timed out");
         }
 
         /**
          * Called by the {@link RecognizerEngine} if the recognizer fails.
          */
         public void onRecognitionFailure(final String msg) {
-            if (false) Log.d(TAG, "onRecognitionFailure " + msg);
+            if (DEBUG) Log.d(TAG, "onRecognitionFailure " + msg);
             // we had zero results.  Just try again.
             askToTryAgain();
         }
@@ -723,7 +725,7 @@ public class VoiceDialerActivity extends Activity {
          * Called by the {@link RecognizerEngine} on an internal error.
          */
         public void onRecognitionError(final String msg) {
-            if (false) Log.d(TAG, "onRecognitionError " + msg);
+            if (DEBUG) Log.d(TAG, "onRecognitionError " + msg);
             mHandler.post(new ErrorRunnable(R.string.recognition_error));
             exitActivity();
         }
@@ -736,10 +738,10 @@ public class VoiceDialerActivity extends Activity {
          * @param intents a list of Intents corresponding to the sentences.
          */
         public void onRecognitionSuccess(final Intent[] intents) {
-            if (false) Log.d(TAG, "CommandRecognizerClient onRecognitionSuccess " +
+            if (DEBUG) Log.d(TAG, "CommandRecognizerClient onRecognitionSuccess " +
                     intents.length);
             if (mState != WAITING_FOR_COMMAND) {
-                if (false) Log.d(TAG, "not waiting for command, ignoring");
+                if (DEBUG) Log.d(TAG, "not waiting for command, ignoring");
                 return;
             }
 
@@ -769,7 +771,7 @@ public class VoiceDialerActivity extends Activity {
                         // see if we the response was "exit" or "cancel".
                         String value = intents[0].getStringExtra(
                             RecognizerEngine.SEMANTIC_EXTRA);
-                        if (false) Log.d(TAG, "value " + value);
+                        if (DEBUG) Log.d(TAG, "value " + value);
                         if ("X".equals(value)) {
                             exitActivity();
                             return;
@@ -810,9 +812,7 @@ public class VoiceDialerActivity extends Activity {
                             new DialogInterface.OnCancelListener() {
 
                             public void onCancel(DialogInterface dialog) {
-                                if (false) {
-                                    Log.d(TAG, "cancelListener.onCancel");
-                                }
+                                if (DEBUG) Log.d(TAG, "cancelListener.onCancel");
                                 dialog.dismiss();
                                 finish();
                             }
@@ -822,9 +822,7 @@ public class VoiceDialerActivity extends Activity {
                             new DialogInterface.OnClickListener() {
 
                             public void onClick(DialogInterface dialog, int which) {
-                                if (false) {
-                                    Log.d(TAG, "clickListener.onClick " + which);
-                                }
+                                if (DEBUG) Log.d(TAG, "clickListener.onClick " + which);
                                 startActivityHelp(intents[which]);
                                 dialog.dismiss();
                                 finish();
@@ -835,10 +833,8 @@ public class VoiceDialerActivity extends Activity {
                             new DialogInterface.OnClickListener() {
 
                             public void onClick(DialogInterface dialog, int which) {
-                                if (false) {
-                                    Log.d(TAG, "negativeListener.onClick " +
+                                if (DEBUG) Log.d(TAG, "negativeListener.onClick " +
                                         which);
-                                }
                                 dialog.dismiss();
                                 finish();
                             }
@@ -863,9 +859,9 @@ public class VoiceDialerActivity extends Activity {
 
     private class ChoiceRecognizerClient implements RecognizerClient {
         public void onRecognitionSuccess(final Intent[] intents) {
-            if (false) Log.d(TAG, "ChoiceRecognizerClient onRecognitionSuccess");
+            if (DEBUG) Log.d(TAG, "ChoiceRecognizerClient onRecognitionSuccess");
             if (mState != WAITING_FOR_CHOICE) {
-                if (false) Log.d(TAG, "not waiting for choice, ignoring");
+                if (DEBUG) Log.d(TAG, "not waiting for choice, ignoring");
                 return;
             }
 
@@ -877,7 +873,7 @@ public class VoiceDialerActivity extends Activity {
             if (intents.length > 0) {
                 String value = intents[0].getStringExtra(
                     RecognizerEngine.SEMANTIC_EXTRA);
-                if (false) Log.d(TAG, "value " + value);
+                if (DEBUG) Log.d(TAG, "value " + value);
                 if ("R".equals(value)) {
                     if (mUsingBluetooth) {
                         mHandler.post(new GreetingRunnable());
@@ -901,7 +897,7 @@ public class VoiceDialerActivity extends Activity {
                         performChoice();
                     } else {
                         // invalid choice
-                        if (false) Log.d(TAG, "invalid choice" + value);
+                        if (DEBUG) Log.d(TAG, "invalid choice" + value);
 
                         if (mUsingBluetooth) {
                             mTtsParams.remove(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID);
@@ -916,23 +912,23 @@ public class VoiceDialerActivity extends Activity {
         }
 
         public void onRecognitionFailure(String msg) {
-            if (false) Log.d(TAG, "ChoiceRecognizerClient onRecognitionFailure");
+            if (DEBUG) Log.d(TAG, "ChoiceRecognizerClient onRecognitionFailure");
             exitActivity();
         }
 
         public void onRecognitionError(String err) {
-            if (false) Log.d(TAG, "ChoiceRecognizerClient onRecognitionError");
+            if (DEBUG) Log.d(TAG, "ChoiceRecognizerClient onRecognitionError");
             mHandler.post(new ErrorRunnable(R.string.recognition_error));
             exitActivity();
         }
 
         public void onMicrophoneStart(InputStream mic) {
-            if (false) Log.d(TAG, "ChoiceRecognizerClient onMicrophoneStart");
+            if (DEBUG) Log.d(TAG, "ChoiceRecognizerClient onMicrophoneStart");
         }
     }
 
     private void speakChoices() {
-        if (false) Log.d(TAG, "speakChoices");
+        if (DEBUG) Log.d(TAG, "speakChoices");
         mState = SPEAKING_CHOICES;
 
         String sentenceSpoken = spaceOutDigits(
@@ -1006,7 +1002,7 @@ public class VoiceDialerActivity extends Activity {
     }
 
     private void listenForCommand() {
-        if (false) Log.d(TAG, ""
+        if (DEBUG) Log.d(TAG, ""
                 + "Command(): MICROPHONE_EXTRA: "+getArg(MICROPHONE_EXTRA)+
                 ", CONTACTS_EXTRA: "+getArg(CONTACTS_EXTRA));
 
@@ -1023,7 +1019,7 @@ public class VoiceDialerActivity extends Activity {
     }
 
     private void listenForChoice() {
-        if (false) Log.d(TAG, "listenForChoice(): MICROPHONE_EXTRA: " +
+        if (DEBUG) Log.d(TAG, "listenForChoice(): MICROPHONE_EXTRA: " +
                 getArg(MICROPHONE_EXTRA));
 
         mState = WAITING_FOR_CHOICE;
@@ -1040,7 +1036,7 @@ public class VoiceDialerActivity extends Activity {
     private void exitActivity() {
         synchronized(this) {
             if (mState != EXITING) {
-                if (false) Log.d(TAG, "exitActivity");
+                if (DEBUG) Log.d(TAG, "exitActivity");
                 mState = SPEAKING_GOODBYE;
                 if (mUsingBluetooth) {
                     mTtsParams.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,
@@ -1127,7 +1123,7 @@ public class VoiceDialerActivity extends Activity {
             try {
                 mRecognizerThread.join();
             } catch (InterruptedException e) {
-                if (false) Log.d(TAG, "onStop mRecognizerThread.join exception " + e);
+                if (DEBUG) Log.d(TAG, "onStop mRecognizerThread.join exception " + e);
             }
             mRecognizerThread = null;
         }
