@@ -25,13 +25,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Vector;
 
+import static com.android.voicedialer.ConfigUtils.DEBUG;
+
 /**
  * This class represents a person who may be called via the VoiceDialer app.
  * The person has a name and a list of phones (home, mobile, work).
  */
 public class VoiceDialerTester {
     private static final String TAG = "VoiceDialerTester";
-    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
 
     private final WavFile[] mWavFiles;
     private final File[] mWavDirs;
@@ -123,7 +124,7 @@ public class VoiceDialerTester {
         utter = utter.substring(0, utter.indexOf('.')).trim();
         for (int i = 0; i < intents.length; i++) {
             String sentence =
-                    intents[i].getStringExtra(RecognizerEngine.SENTENCE_EXTRA).
+                    intents[i].getStringExtra(ConfigUtils.SENTENCE_EXTRA).
                     toLowerCase().trim();
             // note the first in case there are no matches
             if (i == 0) {
@@ -148,10 +149,6 @@ public class VoiceDialerTester {
         return mWavFile < mWavFiles.length;
     }
 
-    private static final String REPORT_FMT = "%6s %6s %6s %6s %6s %6s %6s %s";
-    private static final String REPORT_HDR = String.format(REPORT_FMT,
-            "1/1", "1/N", "M/N", "0/N", "Fail", "Error", "Total", "");
-
     /**
      * Called when the test is complete to dump a summary.
      */
@@ -171,7 +168,7 @@ public class VoiceDialerTester {
 
         // summary report for all files
         if (DEBUG) Log.d(TAG, "Summary of all utterances");
-        if (DEBUG) Log.d(TAG, REPORT_HDR);
+        if (DEBUG) Log.d(TAG, ConfigUtils.REPORT_HDR);
         reportSummary("Total", null);
     }
 
@@ -184,7 +181,7 @@ public class VoiceDialerTester {
         Arrays.sort(names);
 
         if (DEBUG) Log.d(TAG, "Summary of utternaces by filename");
-        if (DEBUG) Log.d(TAG, REPORT_HDR);
+        if (DEBUG) Log.d(TAG, ConfigUtils.REPORT_HDR);
         for (final String fn : names) {
             reportSummary(fn,
                     new FileFilter() {
@@ -204,7 +201,7 @@ public class VoiceDialerTester {
         Arrays.sort(names);
 
         if (DEBUG) Log.d(TAG, "Summary of utterances by directory");
-        if (DEBUG) Log.d(TAG, REPORT_HDR);
+        if (DEBUG) Log.d(TAG, ConfigUtils.REPORT_HDR);
         for (File dir : mWavDirs) {
             final String dn = dir.getPath();
             final String dn2 = dn + "/";
@@ -241,20 +238,16 @@ public class VoiceDialerTester {
             }
         }
 
-        String line = String.format(REPORT_FMT,
-                countString(count11, total),
-                countString(count1N, total),
-                countString(countMN, total),
-                countString(count0N, total),
-                countString(countFail, total),
-                countString(countErrors, total),
+        String line = String.format(ConfigUtils.REPORT_FMT,
+                ConfigUtils.countString(count11, total),
+                ConfigUtils.countString(count1N, total),
+                ConfigUtils.countString(countMN, total),
+                ConfigUtils.countString(count0N, total),
+                ConfigUtils.countString(countFail, total),
+                ConfigUtils.countString(countErrors, total),
                 "" + total,
                 label);
         Log.d(TAG, line);
-    }
-
-    private static String countString(int count, int total) {
-        return total > 0 ? "" + (100 * count / total) + "%" : "";
     }
 
 }

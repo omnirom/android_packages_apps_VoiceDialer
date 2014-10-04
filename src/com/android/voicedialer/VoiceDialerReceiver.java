@@ -24,9 +24,10 @@ import com.android.internal.telephony.TelephonyIntents;
 import android.util.Log;
 import android.widget.Toast;
 
+import static com.android.voicedialer.ConfigUtils.DEBUG;
+
 public class VoiceDialerReceiver extends BroadcastReceiver {
     private static final String TAG = "VoiceDialerReceiver";
-    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -38,7 +39,7 @@ public class VoiceDialerReceiver extends BroadcastReceiver {
         
         // force recompilation of g2g on boot
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)) {
-            CommandRecognizerEngine.deleteCachedGrammarFiles(context);
+            ConfigUtils.deleteCachedGrammarFiles(context);
         }
         
         // force recompilation if apps change, for 'OPEN' command
@@ -47,7 +48,7 @@ public class VoiceDialerReceiver extends BroadcastReceiver {
                 Intent.ACTION_PACKAGE_REMOVED.equals(action) ||
                 Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE.equals(action) ||
                 Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE.equals(action)) {
-            CommandRecognizerEngine.deleteCachedGrammarFiles(context);
+            ConfigUtils.deleteCachedGrammarFiles(context);
         }
 
         // Voice Dialer Logging Enabled, *#*#8351#*#*

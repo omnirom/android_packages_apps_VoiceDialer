@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.android.voicedialer.ConfigUtils.DEBUG;
 
 /**
  * This class represents a person who may be called via the VoiceDialer app.
@@ -36,7 +37,6 @@ import java.util.List;
  */
 public class VoiceContact {
     private static final String TAG = "VoiceContact";
-    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
 
     /**
      * Corresponding row doesn't exist.

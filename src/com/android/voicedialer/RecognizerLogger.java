@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.android.voicedialer.ConfigUtils.DEBUG;
+
 /**
  * This class logs the inputs and results of a recognition session to
  * the files listed below, which reside in
@@ -51,7 +53,6 @@ import java.util.List;
 public class RecognizerLogger {
 
     private static final String TAG = "RecognizerLogger";
-    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
 
     private static final String LOGDIR = "logdir";
     private static final String ENABLED = "enabled";
@@ -168,8 +169,8 @@ public class RecognizerLogger {
         logLine("Intents *********************");
         StringBuffer sb = new StringBuffer();
         for (Intent intent : intents) {
-            logLine(intent.toString() + " " + RecognizerEngine.SENTENCE_EXTRA + "=" +
-                    intent.getStringExtra(RecognizerEngine.SENTENCE_EXTRA));
+            logLine(intent.toString() + " " + ConfigUtils.SENTENCE_EXTRA + "=" +
+                    intent.getStringExtra(ConfigUtils.SENTENCE_EXTRA));
         }
         try {
             mWriter.flush();

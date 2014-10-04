@@ -17,7 +17,6 @@
 package com.android.voicedialer;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.speech.srec.MicrophoneInputStream;
 import android.speech.srec.Recognizer;
 import android.speech.srec.WaveHeader;
@@ -26,7 +25,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
+
+import static com.android.voicedialer.ConfigUtils.DEBUG;
 
 /**
  * This class is a framework for recognizing speech.  It must be extended to use.
@@ -56,20 +56,11 @@ import java.util.ArrayList;
  * {@link VoiceDialerActivity}, which saves setup time.
  * </ul>
  */
-abstract public class RecognizerEngine {
+public abstract class RecognizerEngine {
 
     protected static final String TAG = "RecognizerEngine";
 
-    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
-
-    protected static final String ACTION_RECOGNIZER_RESULT =
-            "com.android.voicedialer.ACTION_RECOGNIZER_RESULT";
-    public static final String SENTENCE_EXTRA = "sentence";
-    public static final String SEMANTIC_EXTRA = "semantic";
-
     protected final String SREC_DIR = Recognizer.getConfigDir(null);
-
-    protected static final String OPEN_ENTRIES = "openentries.txt";
 
     protected static final int RESULT_LIMIT = 5;
 
@@ -86,9 +77,9 @@ abstract public class RecognizerEngine {
         mSampleRate = 0;
     }
 
-    abstract protected void setupGrammar() throws IOException, InterruptedException;
+    protected abstract void setupGrammar() throws IOException, InterruptedException;
 
-    abstract protected void onRecognitionSuccess(RecognizerClient recognizerClient)
+    protected abstract void onRecognitionSuccess(RecognizerClient recognizerClient)
             throws InterruptedException;
 
     /**
@@ -229,18 +220,5 @@ abstract public class RecognizerEngine {
             mLogger = null;
         }
         if (DEBUG) Log.d(TAG, "start bye");
-    }
-
-    protected static void addIntent(ArrayList<Intent> intents, Intent intent) {
-        for (Intent in : intents) {
-            if (in.getAction() != null &&
-                    in.getAction().equals(intent.getAction()) &&
-                    in.getData() != null &&
-                    in.getData().equals(intent.getData())) {
-                return;
-            }
-        }
-        intent.setFlags(intent.getFlags() | Intent.FLAG_ACTIVITY_NEW_TASK);
-        intents.add(intent);
     }
 }

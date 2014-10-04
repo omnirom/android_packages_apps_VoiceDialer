@@ -22,9 +22,9 @@ import android.speech.srec.Recognizer;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
+import static com.android.voicedialer.ConfigUtils.DEBUG;
 
-    private static final boolean DEBUG = VoiceDialerActivity.DEBUG;
+public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
 
     /**
      * Constructor.
@@ -83,10 +83,10 @@ public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
                 ("R".equalsIgnoreCase(semantic)) ||
                 ("X".equalsIgnoreCase(semantic))) {
                 if (DEBUG) Log.d(TAG, " got valid response");
-                Intent intent = new Intent(RecognizerEngine.ACTION_RECOGNIZER_RESULT, null);
-                intent.putExtra(RecognizerEngine.SENTENCE_EXTRA, literal);
-                intent.putExtra(RecognizerEngine.SEMANTIC_EXTRA, semantic);
-                addIntent(intents, intent);
+                Intent intent = new Intent(ConfigUtils.ACTION_RECOGNIZER_RESULT, null);
+                intent.putExtra(ConfigUtils.SENTENCE_EXTRA, literal);
+                intent.putExtra(ConfigUtils.SEMANTIC_EXTRA, semantic);
+                ConfigUtils.addIntent(intents, intent);
             } else {
                 // Anything besides yes or no is a failure.
             }
@@ -101,8 +101,7 @@ public class PhoneTypeChoiceRecognizerEngine extends RecognizerEngine {
         if (intents.size() == 0) {
             if (DEBUG) Log.d(TAG, " no intents");
             recognizerClient.onRecognitionFailure("No Intents generated");
-        }
-        else {
+        } else {
             if (DEBUG) Log.d(TAG, " success");
             recognizerClient.onRecognitionSuccess(
                     intents.toArray(new Intent[intents.size()]));

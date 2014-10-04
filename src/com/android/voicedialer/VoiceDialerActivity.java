@@ -44,8 +44,11 @@ import android.widget.TextView;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.StrictMath;
 import java.util.HashMap;
 import java.util.List;
+
+import static com.android.voicedialer.ConfigUtils.DEBUG;
 
 /**
  * TODO: get rid of the anonymous classes
@@ -125,34 +128,6 @@ import java.util.List;
 public class VoiceDialerActivity extends Activity {
 
     private static final String TAG = "VoiceDialerActivity";
-    public static final boolean DEBUG = false;
-
-    private static final String MICROPHONE_EXTRA = "microphone";
-    private static final String CONTACTS_EXTRA = "contacts";
-
-    private static final String SPEAK_NOW_UTTERANCE = "speak_now";
-    private static final String TRY_AGAIN_UTTERANCE = "try_again";
-    private static final String CHOSEN_ACTION_UTTERANCE = "chose_action";
-    private static final String GOODBYE_UTTERANCE = "goodbye";
-    private static final String CHOICES_UTTERANCE = "choices";
-
-    private static final int FIRST_UTTERANCE_DELAY = 300;
-    private static final int MAX_TTS_DELAY = 6000;
-    private static final int EXIT_DELAY = 2000;
-
-    private static final int BLUETOOTH_SAMPLE_RATE = 8000;
-    private static final int REGULAR_SAMPLE_RATE = 11025;
-
-    private static final int INITIALIZING = 0;
-    private static final int SPEAKING_GREETING = 1;
-    private static final int WAITING_FOR_COMMAND = 2;
-    private static final int SPEAKING_TRY_AGAIN = 3;
-    private static final int SPEAKING_CHOICES = 4;
-    private static final int WAITING_FOR_CHOICE = 5;
-    private static final int WAITING_FOR_DIALOG_CHOICE = 6;
-    private static final int SPEAKING_CHOSEN_ACTION = 7;
-    private static final int SPEAKING_GOODBYE = 8;
-    private static final int EXITING = 9;
 
     private static final CommandRecognizerEngine mCommandEngine =
             new CommandRecognizerEngine();
@@ -199,7 +174,7 @@ public class VoiceDialerActivity extends Activity {
 
         acquireWakeLock(this);
 
-        mState = INITIALIZING;
+        mState = ConfigUtils.INITIALIZING;
         mChosenAction = null;
         mAudioManager.requestAudioFocus(
                 null, AudioManager.STREAM_MUSIC,
@@ -228,7 +203,7 @@ public class VoiceDialerActivity extends Activity {
         mReceiver = new VoiceDialerBroadcastReceiver();
         registerReceiver(mReceiver, audioStateFilter);
 
-        mCommandEngine.setContactsFile(newFile(getArg(CONTACTS_EXTRA)));
+        mCommandEngine.setContactsFile(newFile(getArg(ConfigUtils.CONTACTS_EXTRA)));
         mCommandEngine.setMinimizeResults(true);
         mCommandEngine.setAllowOpenEntries(false);
         mCommandClient = new CommandRecognizerClient();
@@ -245,7 +220,7 @@ public class VoiceDialerActivity extends Activity {
         } else {
             mUsingBluetooth = false;
             if (DEBUG) Log.d(TAG, "bluetooth unavailable");
-            mSampleRate = REGULAR_SAMPLE_RATE;
+            mSampleRate = ConfigUtils.REGULAR_SAMPLE_RATE;
             mCommandEngine.setMinimizeResults(false);
             mCommandEngine.setAllowOpenEntries(true);
 
@@ -290,15 +265,15 @@ public class VoiceDialerActivity extends Activity {
                 Log.e(TAG, "utterance completion not delivered, using fallback");
             }
             if (DEBUG) Log.d(TAG, "onTtsCompletionRunnable");
-            if (mState == SPEAKING_GREETING || mState == SPEAKING_TRY_AGAIN) {
+            if (mState == ConfigUtils.SPEAKING_GREETING || mState == ConfigUtils.SPEAKING_TRY_AGAIN) {
                 listenForCommand();
-            } else if (mState == SPEAKING_CHOICES) {
+            } else if (mState == ConfigUtils.SPEAKING_CHOICES) {
                 listenForChoice();
-            } else if (mState == SPEAKING_GOODBYE) {
-                mState = EXITING;
+            } else if (mState == ConfigUtils.SPEAKING_GOODBYE) {
+                mState = ConfigUtils.EXITING;
                 finish();
-            } else if (mState == SPEAKING_CHOSEN_ACTION) {
-                mState = EXITING;
+            } else if (mState == ConfigUtils.SPEAKING_CHOSEN_ACTION) {
+                mState = ConfigUtils.EXITING;
                 startActivityHelp(mChosenAction);
                 finish();
             }
@@ -307,9 +282,9 @@ public class VoiceDialerActivity extends Activity {
 
     class GreetingRunnable implements Runnable {
         public void run() {
-            mState = SPEAKING_GREETING;
+            mState = ConfigUtils.SPEAKING_GREETING;
             mTtsParams.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,
-                    SPEAK_NOW_UTTERANCE);
+                    ConfigUtils.SPEAK_NOW_UTTERANCE);
             mTts.speak(getString(R.string.speak_now_tts),
                 TextToSpeech.QUEUE_FLUSH,
                 mTtsParams);
@@ -318,7 +293,7 @@ public class VoiceDialerActivity extends Activity {
             // does not complete, post a delayed runnable to fire
             // the intent.
             mFallbackRunnable = new OnTtsCompletionRunnable(true);
-            mHandler.postDelayed(mFallbackRunnable, MAX_TTS_DELAY);
+            mHandler.postDelayed(mFallbackRunnable, ConfigUtils.MAX_TTS_DELAY);
         }
     }
 
@@ -362,13 +337,12 @@ public class VoiceDialerActivity extends Activity {
                 // the bluetooth connection is not up yet, still waiting.
             } else {
                 // we now have SCO connection and TTS, so we can start.
-                mHandler.postDelayed(new GreetingRunnable(), FIRST_UTTERANCE_DELAY);
+                mHandler.postDelayed(new GreetingRunnable(), ConfigUtils.FIRST_UTTERANCE_DELAY);
             }
         }
     }
 
-    class OnUtteranceCompletedListener
-            implements TextToSpeech.OnUtteranceCompletedListener {
+    class OnUtteranceCompletedListener implements TextToSpeech.OnUtteranceCompletedListener {
         public void onUtteranceCompleted(String utteranceId) {
             if (DEBUG) Log.d(TAG, "onUtteranceCompleted " + utteranceId);
             // since the utterance has completed, we no longer need the fallback.
@@ -385,7 +359,7 @@ public class VoiceDialerActivity extends Activity {
 
             mBluetoothHeadset.startVoiceRecognition(mBluetoothDevice);
 
-            mSampleRate = BLUETOOTH_SAMPLE_RATE;
+            mSampleRate = ConfigUtils.BLUETOOTH_SAMPLE_RATE;
             mCommandEngine.setMinimizeResults(true);
             mCommandEngine.setAllowOpenEntries(false);
 
@@ -405,7 +379,7 @@ public class VoiceDialerActivity extends Activity {
         } else {
             if (DEBUG) Log.d(TAG, "not using bluetooth");
             mUsingBluetooth = false;
-            mSampleRate = REGULAR_SAMPLE_RATE;
+            mSampleRate = ConfigUtils.REGULAR_SAMPLE_RATE;
             mCommandEngine.setMinimizeResults(false);
             mCommandEngine.setAllowOpenEntries(true);
 
@@ -473,10 +447,10 @@ public class VoiceDialerActivity extends Activity {
                         // still waiting for the TTS to be set up.
                     } else {
                         // we now have SCO connection and TTS, so we can start.
-                        mHandler.postDelayed(new GreetingRunnable(), FIRST_UTTERANCE_DELAY);
+                        mHandler.postDelayed(new GreetingRunnable(), ConfigUtils.FIRST_UTTERANCE_DELAY);
                     }
                 } else if (prevState == BluetoothHeadset.STATE_AUDIO_CONNECTED) {
-                    if (!mWaitingForScoConnection && mState != EXITING) {
+                    if (!mWaitingForScoConnection && mState != ConfigUtils.EXITING) {
                         // apparently our connection to the headset has dropped.
                         // we won't be able to continue voicedialing.
                         if (DEBUG) Log.d(TAG, "lost sco connection");
@@ -506,9 +480,9 @@ public class VoiceDialerActivity extends Activity {
                 findViewById(R.id.retry_view).setVisibility(View.VISIBLE);
 
                 if (mUsingBluetooth) {
-                    mState = SPEAKING_TRY_AGAIN;
+                    mState = ConfigUtils.SPEAKING_TRY_AGAIN;
                     mTtsParams.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,
-                            TRY_AGAIN_UTTERANCE);
+                            ConfigUtils.TRY_AGAIN_UTTERANCE);
                     mTts.speak(getString(R.string.no_results_tts),
                         TextToSpeech.QUEUE_FLUSH,
                         mTtsParams);
@@ -518,7 +492,7 @@ public class VoiceDialerActivity extends Activity {
                     // does not complete, post a delayed runnable to fire
                     // the intent.
                     mFallbackRunnable = new OnTtsCompletionRunnable(true);
-                    mHandler.postDelayed(mFallbackRunnable, MAX_TTS_DELAY);
+                    mHandler.postDelayed(mFallbackRunnable, ConfigUtils.MAX_TTS_DELAY);
                 } else {
                     try {
                         Thread.sleep(playSound(ToneGenerator.TONE_PROP_NACK));
@@ -533,13 +507,13 @@ public class VoiceDialerActivity extends Activity {
 
     private void performChoice() {
         if (mUsingBluetooth) {
-            String sentenceSpoken = spaceOutDigits(
+            String sentenceSpoken = ConfigUtils.spaceOutDigits(
                     mChosenAction.getStringExtra(
-                        RecognizerEngine.SENTENCE_EXTRA));
+                        ConfigUtils.SENTENCE_EXTRA));
 
-            mState = SPEAKING_CHOSEN_ACTION;
+            mState = ConfigUtils.SPEAKING_CHOSEN_ACTION;
             mTtsParams.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,
-                    CHOSEN_ACTION_UTTERANCE);
+                    ConfigUtils.CHOSEN_ACTION_UTTERANCE);
             mTts.speak(sentenceSpoken,
                 TextToSpeech.QUEUE_FLUSH,
                 mTtsParams);
@@ -549,7 +523,7 @@ public class VoiceDialerActivity extends Activity {
             // does not complete, post a delayed runnable to fire
             // the intent.
             mFallbackRunnable = new OnTtsCompletionRunnable(true);
-            mHandler.postDelayed(mFallbackRunnable, MAX_TTS_DELAY);
+            mHandler.postDelayed(mFallbackRunnable, ConfigUtils.MAX_TTS_DELAY);
         } else {
             // just dispatch the intent
             startActivityHelp(mChosenAction);
@@ -572,13 +546,13 @@ public class VoiceDialerActivity extends Activity {
             // does not complete, post a delayed runnable to begin
             // listening.
             mFallbackRunnable = new OnTtsCompletionRunnable(true);
-            mHandler.postDelayed(mFallbackRunnable, MAX_TTS_DELAY);
+            mHandler.postDelayed(mFallbackRunnable, ConfigUtils.MAX_TTS_DELAY);
         } else {
             // We are not running in bluetooth mode, so all
             // we need to do is wait for the user to select
             // a choice from the alert dialog.  We will wait
             // indefinitely for this.
-            mState = WAITING_FOR_DIALOG_CHOICE;
+            mState = ConfigUtils.WAITING_FOR_DIALOG_CHOICE;
         }
     }
 
@@ -740,7 +714,7 @@ public class VoiceDialerActivity extends Activity {
         public void onRecognitionSuccess(final Intent[] intents) {
             if (DEBUG) Log.d(TAG, "CommandRecognizerClient onRecognitionSuccess " +
                     intents.length);
-            if (mState != WAITING_FOR_COMMAND) {
+            if (mState != ConfigUtils.WAITING_FOR_COMMAND) {
                 if (DEBUG) Log.d(TAG, "not waiting for command, ignoring");
                 return;
             }
@@ -759,7 +733,7 @@ public class VoiceDialerActivity extends Activity {
                     String[] sentences = new String[intents.length];
                     for (int i = 0; i < intents.length; i++) {
                         sentences[i] = intents[i].getStringExtra(
-                                RecognizerEngine.SENTENCE_EXTRA);
+                                ConfigUtils.SENTENCE_EXTRA);
                     }
 
                     if (intents.length == 0) {
@@ -770,7 +744,7 @@ public class VoiceDialerActivity extends Activity {
                     if (intents.length > 0) {
                         // see if we the response was "exit" or "cancel".
                         String value = intents[0].getStringExtra(
-                            RecognizerEngine.SEMANTIC_EXTRA);
+                            ConfigUtils.SEMANTIC_EXTRA);
                         if (DEBUG) Log.d(TAG, "value " + value);
                         if ("X".equals(value)) {
                             exitActivity();
@@ -860,7 +834,7 @@ public class VoiceDialerActivity extends Activity {
     private class ChoiceRecognizerClient implements RecognizerClient {
         public void onRecognitionSuccess(final Intent[] intents) {
             if (DEBUG) Log.d(TAG, "ChoiceRecognizerClient onRecognitionSuccess");
-            if (mState != WAITING_FOR_CHOICE) {
+            if (mState != ConfigUtils.WAITING_FOR_CHOICE) {
                 if (DEBUG) Log.d(TAG, "not waiting for choice, ignoring");
                 return;
             }
@@ -872,7 +846,7 @@ public class VoiceDialerActivity extends Activity {
             // disregard all but the first intent.
             if (intents.length > 0) {
                 String value = intents[0].getStringExtra(
-                    RecognizerEngine.SEMANTIC_EXTRA);
+                    ConfigUtils.SEMANTIC_EXTRA);
                 if (DEBUG) Log.d(TAG, "value " + value);
                 if ("R".equals(value)) {
                     if (mUsingBluetooth) {
@@ -888,7 +862,7 @@ public class VoiceDialerActivity extends Activity {
                     for (int i = 0; i < mAvailableChoices.length; i++) {
                         if (value.equalsIgnoreCase(
                                 mAvailableChoices[i].getStringExtra(
-                                        CommandRecognizerEngine.PHONE_TYPE_EXTRA))) {
+                                        ConfigUtils.PHONE_TYPE_EXTRA))) {
                             mChosenAction = mAvailableChoices[i];
                         }
                     }
@@ -929,11 +903,11 @@ public class VoiceDialerActivity extends Activity {
 
     private void speakChoices() {
         if (DEBUG) Log.d(TAG, "speakChoices");
-        mState = SPEAKING_CHOICES;
+        mState = ConfigUtils.SPEAKING_CHOICES;
 
-        String sentenceSpoken = spaceOutDigits(
+        String sentenceSpoken = ConfigUtils.spaceOutDigits(
                 mAvailableChoices[0].getStringExtra(
-                    RecognizerEngine.SENTENCE_EXTRA));
+                    ConfigUtils.SENTENCE_EXTRA));
 
         // When we have multiple choices, they will be of the form
         // "call jack jones at home", "call jack jones on mobile".
@@ -951,50 +925,15 @@ public class VoiceDialerActivity extends Activity {
                 builder.append(" ");
             }
             String tmpSentence = mAvailableChoices[i].getStringExtra(
-                    RecognizerEngine.SENTENCE_EXTRA);
+                    ConfigUtils.SENTENCE_EXTRA);
             String[] words = tmpSentence.trim().split(" ");
             builder.append(words[words.length-1]);
         }
         mTtsParams.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,
-                CHOICES_UTTERANCE);
+                ConfigUtils.CHOICES_UTTERANCE);
         mTts.speak(builder.toString(),
             TextToSpeech.QUEUE_ADD,
             mTtsParams);
-    }
-
-
-    private static String spaceOutDigits(String sentenceDisplay) {
-        // if we have a sentence of the form "dial 123 456 7890",
-        // we need to insert a space between each digit, otherwise
-        // the TTS engine will say "dial one hundred twenty three...."
-        // When there already is a space, we also insert a comma,
-        // so that it pauses between sections.  For the displayable
-        // sentence "dial 123 456 7890" it will speak
-        // "dial 1 2 3, 4 5 6, 7 8 9 0"
-        char buffer[] = sentenceDisplay.toCharArray();
-        StringBuilder builder = new StringBuilder();
-        boolean buildingNumber = false;
-        int l = sentenceDisplay.length();
-        for (int index = 0; index < l; index++) {
-            char c = buffer[index];
-            if (Character.isDigit(c)) {
-                if (buildingNumber) {
-                    builder.append(" ");
-                }
-                buildingNumber = true;
-                builder.append(c);
-            } else if (c == ' ') {
-                if (buildingNumber) {
-                    builder.append(",");
-                } else {
-                    builder.append(" ");
-                }
-            } else {
-                buildingNumber = false;
-                builder.append(c);
-            }
-        }
-        return builder.toString();
     }
 
     private void startActivityHelp(Intent intent) {
@@ -1003,15 +942,15 @@ public class VoiceDialerActivity extends Activity {
 
     private void listenForCommand() {
         if (DEBUG) Log.d(TAG, ""
-                + "Command(): MICROPHONE_EXTRA: "+getArg(MICROPHONE_EXTRA)+
-                ", CONTACTS_EXTRA: "+getArg(CONTACTS_EXTRA));
+                + "Command(): MICROPHONE_EXTRA: "+getArg(ConfigUtils.MICROPHONE_EXTRA)+
+                ", CONTACTS_EXTRA: "+getArg(ConfigUtils.CONTACTS_EXTRA));
 
-        mState = WAITING_FOR_COMMAND;
+        mState = ConfigUtils.WAITING_FOR_COMMAND;
         mRecognizerThread = new Thread() {
             public void run() {
                 mCommandEngine.recognize(mCommandClient,
                         VoiceDialerActivity.this,
-                        newFile(getArg(MICROPHONE_EXTRA)),
+                        newFile(getArg(ConfigUtils.MICROPHONE_EXTRA)),
                         mSampleRate);
             }
         };
@@ -1020,14 +959,14 @@ public class VoiceDialerActivity extends Activity {
 
     private void listenForChoice() {
         if (DEBUG) Log.d(TAG, "listenForChoice(): MICROPHONE_EXTRA: " +
-                getArg(MICROPHONE_EXTRA));
+                getArg(ConfigUtils.MICROPHONE_EXTRA));
 
-        mState = WAITING_FOR_CHOICE;
+        mState = ConfigUtils.WAITING_FOR_CHOICE;
         mRecognizerThread = new Thread() {
             public void run() {
                 mPhoneTypeChoiceEngine.recognize(mChoiceClient,
                         VoiceDialerActivity.this,
-                        newFile(getArg(MICROPHONE_EXTRA)), mSampleRate);
+                        newFile(getArg(ConfigUtils.MICROPHONE_EXTRA)), mSampleRate);
             }
         };
         mRecognizerThread.start();
@@ -1035,12 +974,12 @@ public class VoiceDialerActivity extends Activity {
 
     private void exitActivity() {
         synchronized(this) {
-            if (mState != EXITING) {
+            if (mState != ConfigUtils.EXITING) {
                 if (DEBUG) Log.d(TAG, "exitActivity");
-                mState = SPEAKING_GOODBYE;
+                mState = ConfigUtils.SPEAKING_GOODBYE;
                 if (mUsingBluetooth) {
                     mTtsParams.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID,
-                            GOODBYE_UTTERANCE);
+                            ConfigUtils.GOODBYE_UTTERANCE);
                     mTts.speak(getString(R.string.goodbye_tts),
                         TextToSpeech.QUEUE_FLUSH,
                         mTtsParams);
@@ -1049,13 +988,13 @@ public class VoiceDialerActivity extends Activity {
                     // does not complete, post a delayed runnable finish the
                     // activity.
                     mFallbackRunnable = new OnTtsCompletionRunnable(true);
-                    mHandler.postDelayed(mFallbackRunnable, MAX_TTS_DELAY);
+                    mHandler.postDelayed(mFallbackRunnable, ConfigUtils.MAX_TTS_DELAY);
                 } else {
                     mHandler.postDelayed(new Runnable() {
                         public void run() {
                             finish();
                         }
-                    }, EXIT_DELAY);
+                    }, ConfigUtils.EXIT_DELAY);
                 }
             }
         }
@@ -1098,7 +1037,7 @@ public class VoiceDialerActivity extends Activity {
 
     protected void onDestroy() {
         synchronized(this) {
-            mState = EXITING;
+            mState = ConfigUtils.EXITING;
         }
 
         if (mAlertDialog != null) {
@@ -1146,7 +1085,7 @@ public class VoiceDialerActivity extends Activity {
 
     private void acquireWakeLock(Context context) {
         if (mWakeLock == null) {
-            PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
             mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                                        "VoiceDialer");
             mWakeLock.acquire();
