@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cb528df8_cad9a784",
+        "filename": "res/values/strings.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1000026
+      },
+      "writtenOn": "2014-10-08T21:18:03Z",
+      "side": 1,
+      "message": "LOL",
+      "revId": "c2a501cf7c927078d2844babf5fbd747d24e3533",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "cb528df8_aad4634d",
+        "filename": "src/com/android/voicedialer/VoiceDialerActivity.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 1000026
+      },
+      "writtenOn": "2014-10-08T21:18:03Z",
+      "side": 1,
+      "message": "you can add http://developer.android.com/reference/android/view/WindowManager.LayoutParams.html#FLAG_WATCH_OUTSIDE_TOUCH to easy catch a touch outside of the window to close\n\nAlso touching on the mic icon could stop/pause the recording",
+      "revId": "c2a501cf7c927078d2844babf5fbd747d24e3533",
+      "serverId": "56841c99-7c94-43d4-bf0b-cb4707e66d55",
+      "unresolved": false
+    }
+  ]
+}
