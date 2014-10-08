@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="voice_widget_circle_size">94dp</dimen>
+    <dimen name="voice_widget_asset_margin">28dp</dimen>
+    <dimen name="glowpadview_glow_radius">75dip</dimen>
+    <dimen name="glowpadview_snap_margin">40dip</dimen>
+    <dimen name="glowpadview_inner_radius">15dip</dimen>
+    <dimen name="voice_card_height">180dip</dimen>
+    <dimen name="voice_card_view_height">96dip</dimen>
+    <dimen name="voice_card_textview_height">64dip</dimen>
+    <dimen name="voice_card_glowpadview_target_placement_radius">140dip</dimen>
+    <dimen name="voice_card_glowpadview_outerring_diameter">180dip</dimen>
+</resources>

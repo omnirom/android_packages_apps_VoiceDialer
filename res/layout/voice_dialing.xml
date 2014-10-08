@@ -19,60 +19,69 @@
 -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:padding="8dip"
-    android:orientation="vertical">
-    
-    <TextView
-      android:id="@+id/state"
-      android:textSize="12pt"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" 
-      android:text="@string/initializing" />
-
-    <TextView
-      android:id="@+id/substate"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content" />
-      
-    <LinearLayout 
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:orientation="horizontal">
-
-      <FrameLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
- 
-        <ImageView
-          android:id="@+id/microphone_view"
-          android:src="@drawable/ic_vd_mic_on"
-          android:layout_width="wrap_content" 
-          android:layout_height="wrap_content"
-          />
-            
-        <ImageView
-          android:id="@+id/microphone_loading_view"
-          android:src="@drawable/ic_vd_mic_off"
-          android:layout_width="wrap_content" 
-          android:layout_height="wrap_content"
-          />
-                        
-        <ImageView
-          android:id="@+id/retry_view"
-          android:src="@drawable/ic_vd_retry"
-          android:layout_width="wrap_content" 
-          android:layout_height="wrap_content"
-          />
-            
-      </FrameLayout>
-    
-      <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" 
-            android:text="@string/examples" />
-            
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/voice_card_height"
+    android:layout_gravity="bottom|center_horizontal"
+    android:orientation="vertical" >
+    <LinearLayout
+        android:id="@+id/container_info"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/voice_card"
+        android:orientation="vertical"
+        android:padding="8dp" >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/voice_card_textview_height"
+            android:layout_marginBottom="2dip"
+            android:orientation="vertical" >
+            <TextView
+                 android:id="@+id/state"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+                 android:layout_gravity="center_vertical"
+                 android:textAppearance="?android:attr/textAppearanceLarge"
+                 android:textColor="@android:color/black"
+                 android:textSize="22sp"
+                 android:text="@string/initializing" />
+            <TextView
+                 android:id="@+id/substate"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+                 android:layout_gravity="center_vertical"
+                 android:ellipsize="marquee"
+                 android:marqueeRepeatLimit="marquee_forever"
+                 android:singleLine="true"
+                 android:textColor="@android:color/black"
+                 android:textSize="14sp" />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/voice_card_view_height"
+            android:orientation="horizontal" >
+            <com.android.voicedialer.GlowPadWrapper
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:dc="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/glow_pad_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/voice_banner_background"
+                android:focusable="true"
+                android:gravity="center"
+                dc:allowScaling="false"
+                dc:directionDescriptions="@array/voice_widget_direction_descriptions"
+                dc:feedbackCount="1"
+                dc:glowRadius="@dimen/glowpadview_glow_radius"
+                dc:handleDrawable="@drawable/voice_touch_handle"
+                dc:innerRadius="@dimen/glowpadview_inner_radius"
+                dc:outerRadius="@dimen/voice_card_glowpadview_target_placement_radius"
+                dc:outerRingDrawable="@drawable/voice_card_outerring"
+                dc:pointDrawable="@drawable/ic_lockscreen_glowdot"
+                dc:snapMargin="@dimen/glowpadview_snap_margin"
+                dc:targetDescriptions="@array/voice_widget_target_descriptions"
+                dc:targetDrawables="@array/voice_widget_targets"
+                dc:vibrationDuration="20" />
+        </LinearLayout>
     </LinearLayout>
-
 </LinearLayout>

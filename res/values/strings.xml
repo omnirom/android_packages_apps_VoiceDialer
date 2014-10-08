@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- The name of the Voice Dialer application. -->
     <string name="voiceDialer">Voice Dialer</string>
 
@@ -32,18 +32,13 @@
     <!-- present on the VoiceDialer main screen to give examples of valid
             speech input -->
     <string name="examples">
-        Examples:
-        <b>
-            \n\"Call John Doe\"
-            \n\"Call John Doe at home, \u2026\"
-            \n\"Call voicemail\"
-            \n\"Dial (866) 555 0123\"
-            \n\"Dial 911, 811, \u2026\"
-            \n\"Dial +44 7333 444 555\"
-            \n\"Redial\"
-            \n\"Open Calendar\"
-        </b>
+        Examples: Call Omni, Call Omni at home, Dial 911, Redial, Open Calendar\u2026
     </string>
+
+    <string name="description_target_right">Right</string>
+    <string name="description_target_left">Left</string>
+    <string name="description_direction_left">Slide left for <xliff:g id="target_description" example="Unlock">%s</xliff:g>.</string>
+    <string name="description_direction_right">Slide right for <xliff:g id="target_description" example="Unlock">%s</xliff:g>.</string>
 
     <!-- title to the VoiceDialer main screen -->
     <string name="title">Voice Dialer</string>

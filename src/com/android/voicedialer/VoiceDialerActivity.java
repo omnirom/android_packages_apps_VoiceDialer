@@ -38,6 +38,7 @@ import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
@@ -136,7 +137,6 @@ public class VoiceDialerActivity extends Activity {
     private CommandRecognizerClient mCommandClient;
     private ChoiceRecognizerClient mChoiceClient;
     private ToneGenerator mToneGenerator;
-    private Handler mHandler;
     private Thread mRecognizerThread = null;
     private AudioManager mAudioManager;
     private BluetoothHeadset mBluetoothHeadset;
@@ -157,17 +157,15 @@ public class VoiceDialerActivity extends Activity {
     private int mSampleRate;
     private WakeLock mWakeLock;
 
+    private Handler mHandler = new Handler();
+
+    private TextView mMainState;
+    private TextView mSubState;
+    private GlowPadWrapper glowpad;
+
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        // TODO: All of this state management and holding of
-        // connections to the TTS engine and recognizer really
-        // belongs in a service.  The activity can be stopped or deleted
-        // and recreated for lots of reasons.
-        // It's way too late in the ICS release cycle for a change
-        // like this now though.
-        // MHibdon Sept 20 2011
-        mHandler = new Handler();
         mAudioManager = (AudioManager)getSystemService(AUDIO_SERVICE);
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_RING,
                 ToneGenerator.MAX_VOLUME);
@@ -180,19 +178,30 @@ public class VoiceDialerActivity extends Activity {
                 null, AudioManager.STREAM_MUSIC,
                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
 
-        // set this flag so this activity will stay in front of the keyguard
-        int flags = WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
-        getWindow().addFlags(flags);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_IGNORE_CHEEK_PRESSES
+                | WindowManager.LayoutParams.FLAG_SPLIT_TOUCH
+                | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
+
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         // open main window
-        setTheme(android.R.style.Theme_Dialog);
-        setTitle(R.string.title);
         setContentView(R.layout.voice_dialing);
-        findViewById(R.id.microphone_view).setVisibility(View.INVISIBLE);
-        findViewById(R.id.retry_view).setVisibility(View.INVISIBLE);
-        findViewById(R.id.microphone_loading_view).setVisibility(View.VISIBLE);
+        glowpad = (GlowPadWrapper) findViewById(R.id.glow_pad_view);
+        glowpad.reset(false);
+        glowpad.setTouchDisabled(true);
+        glowpad.setCenterDrawable(R.drawable.ic_vd_mic_off);
+        glowpad.ping();
+
+        mMainState = (TextView) findViewById(R.id.state);
+        mSubState = (TextView) findViewById(R.id.substate);
+        mSubState.setSelected(true);
+
         if (RecognizerLogger.isEnabled(this)) {
-            ((TextView) findViewById(R.id.substate)).setText(R.string.logging_enabled);
+            mSubState.setText(R.string.logging_enabled);
+        } else {
+            mSubState.setText(R.string.voiceDialer);
         }
 
         // Get handle to BluetoothHeadset object
@@ -238,14 +247,11 @@ public class VoiceDialerActivity extends Activity {
 
         public void run() {
             // put up an error and exit
-            mHandler.removeCallbacks(mMicFlasher);
-            ((TextView)findViewById(R.id.state)).setText(R.string.failure);
-            ((TextView)findViewById(R.id.substate)).setText(mErrorMsg);
-            ((TextView)findViewById(R.id.substate)).setText(
-                    R.string.headset_connection_lost);
-            findViewById(R.id.microphone_view).setVisibility(View.INVISIBLE);
-            findViewById(R.id.retry_view).setVisibility(View.VISIBLE);
-
+            glowpad.stopPing();
+            mMainState.setText(R.string.failure);
+            mSubState.setText(mErrorMsg);
+            glowpad.setCenterDrawable(R.drawable.ic_vd_retry);
+            glowpad.ping();
 
             if (!mUsingBluetooth) {
                 playSound(ToneGenerator.TONE_PROP_NACK);
@@ -473,11 +479,10 @@ public class VoiceDialerActivity extends Activity {
                     mAlertDialog.dismiss();
                 }
 
-                mHandler.removeCallbacks(mMicFlasher);
-                ((TextView)findViewById(R.id.state)).setText(R.string.please_try_again);
-                findViewById(R.id.state).setVisibility(View.VISIBLE);
-                findViewById(R.id.microphone_view).setVisibility(View.INVISIBLE);
-                findViewById(R.id.retry_view).setVisibility(View.VISIBLE);
+                glowpad.stopPing();
+                mMainState.setText(R.string.please_try_again);
+                glowpad.setCenterDrawable(R.drawable.ic_vd_retry);
+                glowpad.ping();
 
                 if (mUsingBluetooth) {
                     mState = ConfigUtils.SPEAKING_TRY_AGAIN;
@@ -587,11 +592,10 @@ public class VoiceDialerActivity extends Activity {
 
             mHandler.post(new Runnable() {
                 public void run() {
-                    findViewById(R.id.retry_view).setVisibility(View.INVISIBLE);
-                    findViewById(R.id.microphone_loading_view).setVisibility(
-                            View.INVISIBLE);
-                    ((TextView)findViewById(R.id.state)).setText(R.string.listening);
-                    mHandler.post(mMicFlasher);
+                    mMainState.setText(R.string.listening);
+                    mSubState.setText(R.string.examples);
+                    glowpad.setCenterDrawable(R.drawable.ic_vd_mic_on);
+                    glowpad.startPing();
                 }
             });
         }
@@ -728,7 +732,7 @@ public class VoiceDialerActivity extends Activity {
                     if (!mUsingBluetooth) {
                         playSound(ToneGenerator.TONE_PROP_ACK);
                     }
-                    mHandler.removeCallbacks(mMicFlasher);
+                    glowpad.stopPing();
 
                     String[] sentences = new String[intents.length];
                     for (int i = 0; i < intents.length; i++) {
@@ -777,11 +781,7 @@ public class VoiceDialerActivity extends Activity {
 
                         return;
                     } else {
-                        // Either we are not running in bluetooth mode,
-                        // or we had multiple matches.  Either way, we need
-                        // the user to confirm the choice.
-                        // Put up a dialog from which the user can select
-                        // his/her choice.
+
                         DialogInterface.OnCancelListener cancelListener =
                             new DialogInterface.OnCancelListener() {
 
@@ -945,6 +945,7 @@ public class VoiceDialerActivity extends Activity {
                 + "Command(): MICROPHONE_EXTRA: "+getArg(ConfigUtils.MICROPHONE_EXTRA)+
                 ", CONTACTS_EXTRA: "+getArg(ConfigUtils.CONTACTS_EXTRA));
 
+        glowpad.startPing();
         mState = ConfigUtils.WAITING_FOR_COMMAND;
         mRecognizerThread = new Thread() {
             public void run() {
@@ -961,6 +962,7 @@ public class VoiceDialerActivity extends Activity {
         if (DEBUG) Log.d(TAG, "listenForChoice(): MICROPHONE_EXTRA: " +
                 getArg(ConfigUtils.MICROPHONE_EXTRA));
 
+        glowpad.startPing();
         mState = ConfigUtils.WAITING_FOR_CHOICE;
         mRecognizerThread = new Thread() {
             public void run() {
@@ -1068,8 +1070,7 @@ public class VoiceDialerActivity extends Activity {
         }
 
         // clean up UI
-        mHandler.removeCallbacks(mMicFlasher);
-        mHandler.removeMessages(0);
+        glowpad.stopPing();
 
         if (mTts != null) {
             mTts.stop();
@@ -1098,15 +1099,4 @@ public class VoiceDialerActivity extends Activity {
             mWakeLock = null;
         }
     }
-
-    private Runnable mMicFlasher = new Runnable() {
-        int visible = View.VISIBLE;
-
-        public void run() {
-            findViewById(R.id.microphone_view).setVisibility(visible);
-            findViewById(R.id.state).setVisibility(visible);
-            visible = visible == View.VISIBLE ? View.INVISIBLE : View.VISIBLE;
-            mHandler.postDelayed(this, 750);
-        }
-    };
 }
